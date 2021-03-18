@@ -8,10 +8,9 @@ const getHandlerTimer = (time) => async () => {
   const adminUser = store.getAdminUser();
 
   const currentTime = moment().format("HH:mm:ss");
+  console.log({ currentTime })
 
   if (currentTime === time) {
-    console.log({ currentTime })
-
     const channels = await api.callMethod("channels.list", adminUser.token, {});
     const hub = channels.find((channel) =>
       channel.id.includes("announcements")
