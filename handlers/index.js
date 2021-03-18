@@ -12,6 +12,10 @@ exports.handleCommand = async (event) => {
   const args = normalizedText.slice(1).map((arg) => arg.trim());
   const adminUser = store.getAdminUser();
 
+  if (!adminUser) {
+    return
+  }
+
   if (adminUser.userId !== event.userId) {
     await sendMessage({
       to: event.message.from,

@@ -1,7 +1,6 @@
 const moment = require("moment");
 
 const api = require("../api");
-const config = require("../config");
 const store = require("../store");
 const templates = require("../templates");
 
@@ -11,6 +10,8 @@ const getHandlerTimer = (time) => async () => {
   const currentTime = moment().format("HH:mm:ss");
 
   if (currentTime === time) {
+    console.log({ currentTime })
+
     const channels = await api.callMethod("channels.list", adminUser.token, {});
     const hub = channels.find((channel) =>
       channel.id.includes("announcements")
@@ -50,12 +51,12 @@ module.exports = () => {
   }
 
   global.MORNING_TIMER_REMINDER = setInterval(
-    getHandlerTimer("10:00:00"),
+    getHandlerTimer("14:40:00"),
     1000
   );
 
   global.EVENING_TIMER_REMINDER = setInterval(
-    getHandlerTimer("19:00:00"),
+    getHandlerTimer("14:45:00"),
     1000
   );
 };

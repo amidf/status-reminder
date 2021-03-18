@@ -16,13 +16,6 @@ const saveDatabase = () => {
   fs.writeFileSync(dbFile, stringContent);
 };
 
-const resetDb = () => {
-  db = {
-    adminUser: null,
-  };
-  saveDatabase();
-};
-
 // Everything is stored here
 let db = null;
 
@@ -57,3 +50,12 @@ exports.saveIgnoredUsers = (users) => {
 };
 
 exports.getAdminUser = () => db.adminUser;
+
+exports.resetDb = () => {
+  db = {
+    adminUser: null,
+  };
+  saveDatabase();
+};
+
+exports.getDb = () => db

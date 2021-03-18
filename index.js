@@ -57,6 +57,13 @@ app.get("/sendstatus", async (req, res) => {
   }
 });
 
+app.get('/db', (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  res.json(store.getDb())
+  res.status(200)
+})
+
 app.listen(PORT, () => {
   console.log(`Bot is listening at ${PORT} port`);
 });
