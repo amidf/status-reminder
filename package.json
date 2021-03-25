@@ -9,6 +9,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "express": "^4.17.1",
     "flockos": "^0.0.6",
     "handlebars": "^4.7.7",

@@ -17,3 +17,4 @@ exports.userAnswer = Handlebars.compile(
 exports.userStatus = Handlebars.compile(
   fs.readFileSync(path.resolve(__dirname, "./user-status.html")).toString()
 );
+exports.timezones = Handlebars.compile(fs.readFileSync(path.resolve(__dirname, './timezones.html')).toString())

@@ -11,15 +11,6 @@ const getHandlerTimer = (time) => async () => {
   console.log({ currentTime })
 
   if (currentTime === time) {
-    const channels = await api.callMethod("channels.list", adminUser.token, {});
-    const hub = channels.find((channel) =>
-      channel.id.includes("announcements")
-    );
-
-    if (!hub) {
-      return;
-    }
-
     const users = await api.callMethod(
       "channels.listMembers",
       adminUser.token,
@@ -42,11 +33,22 @@ const getHandlerTimer = (time) => async () => {
   }
 };
 
-module.exports = () => {
+module.exports = async () => {
   const adminUser = store.getAdminUser();
 
   if (!adminUser || adminUser.selectedChannels.length === 0) {
     return;
+  }
+
+  try {
+    const users = await api.callMethod('channels.listMember', adminUser.token, { channelId: adminUser.hub, showPublicProfile: false })
+    const filteredUsers = users.filter(user => !adminUser.ignoredUsers.includes(user.userId))
+
+    for (let user of filteredUsers) {
+      const { timezone } = await api.callMethod('users.getInfo', )
+    }
+  } catch (error) {
+    console.log(error)
   }
 
   global.MORNING_TIMER_REMINDER = setInterval(

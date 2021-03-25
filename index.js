@@ -1,7 +1,6 @@
 const express = require("express");
 const flock = require("flockos");
 
-const store = require("./store");
 const config = require("./config");
 const api = require("./api");
 const handlers = require("./handlers");
@@ -15,7 +14,7 @@ flock.appSecret = config.appSecret;
 global.MORNING_TIMER_REMINDER = null;
 global.EVENING_TIMER_REMINDER = null;
 
-launchReminders();
+// launchReminders();
 
 const PORT = process.env.PORT || 1337;
 const app = express();
@@ -36,8 +35,6 @@ app.get("/sendstatus", async (req, res) => {
       { userId }
     );
 
-    console.log({ user });
-
     for (let channel of adminUser.selectedChannels) {
       await api.sendMessage({
         to: channel,
@@ -57,20 +54,45 @@ app.get("/sendstatus", async (req, res) => {
   }
 });
 
-app.get('/db', (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-
-  res.json(store.getDb())
-  res.status(200)
-})
-
 app.listen(PORT, () => {
   console.log(`Bot is listening at ${PORT} port`);
 });
 
-flock.events.on("app.install", (event, callback) => {
+flock.events.on("app.install", async (event, callback) => {
   store.saveAdminUser(event.userId, event.token);
   callback();
+
+  try {
+    const channels = await api.callMethod("channels.list", event.token, {});
+    const hub = channels.find((channel) =>
+      channel.id.includes("announcements")
+    );
+
+    if (!hub) {
+      return;
+    }
+
+    store.saveHub(hub.id);
+
+    const users = await api.callMethod("channels.listMembers", event.token, {
+      channelId: hub.id,
+      showPublicProfile: false,
+    });
+
+    console.log({ users });
+
+    for (let user of users) {
+      await api.sendMessage({
+        to: user.userId,
+        html: {
+          inline: templates.timezones({ user: user.userId }),
+          height: 400,
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 flock.events.on("app.uninstall", (event, callback) => {
