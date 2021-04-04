@@ -10,10 +10,28 @@ exports.handleCommand = async (event) => {
   const normalizedText = event.message.text.trim().split(" ");
   const command = normalizedText[0].toLowerCase();
   const args = normalizedText.slice(1).map((arg) => arg.trim());
-  const adminUser = store.getAdminUser();
+  const { adminUser } = store.data;
+
+  console.log({ event, adminUser, store });
 
   if (!adminUser) {
-    return
+    return;
+  }
+
+  console.log({ command });
+
+  switch (command) {
+    case "/settimezone": {
+      await api.sendMessage({
+        to: event.userId,
+        html: {
+          inline: templates.timezones({ userId: event.userId }),
+          height: 400,
+        },
+      });
+
+      break;
+    }
   }
 
   if (adminUser.userId !== event.userId) {
@@ -24,6 +42,8 @@ exports.handleCommand = async (event) => {
 
     return;
   }
+
+  console.log({ command });
 
   switch (command) {
     case "/getusers": {
@@ -109,6 +129,8 @@ exports.handleCommand = async (event) => {
       break;
     }
     case "/start": {
+      console.log("start");
+
       if (adminUser.selectedChannels.length === 0) {
         await getChannels(event);
 
@@ -116,7 +138,7 @@ exports.handleCommand = async (event) => {
       }
 
       launchReminders();
-      await api.sendMessage({ to: event.message.from, text: 'Bot started' })
+      await api.sendMessage({ to: event.message.from, text: "Bot started" });
       break;
     }
     default: {

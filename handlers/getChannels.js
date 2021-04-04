@@ -3,7 +3,7 @@ const api = require("../api");
 const store = require("../store");
 
 module.exports = async (event) => {
-  const adminUser = store.getAdminUser();
+  const { adminUser } = store.data;
 
   try {
     const channels = await api.callMethod("channels.list", adminUser.token, {});

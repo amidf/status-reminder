@@ -4,60 +4,59 @@ const api = require("../api");
 const store = require("../store");
 const templates = require("../templates");
 
-const getHandlerTimer = (time) => async () => {
-  const adminUser = store.getAdminUser();
+const setHandlerTimer = (time) =>
+  setInterval(async () => {
+    const { adminUser } = store.data;
 
-  const currentTime = moment().format("HH:mm:ss");
-  console.log({ currentTime })
-
-  if (currentTime === time) {
     const users = await api.callMethod(
       "channels.listMembers",
       adminUser.token,
-      { channelId: hub.id, showPublicProfile: true }
+      {
+        channelId: adminUser.hub,
+        showPublicProfile: true,
+      }
     );
 
     const filteredUsers = users.filter(
       (user) => !adminUser.ignoredUsers.includes(user.userId)
     );
 
+    console.log({ users: store.data.users, filteredUsers });
+
     for (let user of filteredUsers) {
-      await api.sendMessage({
-        to: user.userId,
-        html: {
-          inline: templates.userAnswer({ userId: user.userId }),
-          height: 400,
-        },
-      });
+      if (!store.data.users[user.userId]) {
+        continue;
+      }
+
+      const currentTime = moment()
+        .utcOffset(store.data.users[user.userId].timezone)
+        .format("HH:mm:ss");
+
+      console.log({ currentTime, time });
+
+      if (currentTime === time) {
+        await api.sendMessage({
+          to: user.userId,
+          html: {
+            inline: templates.userAnswer({ userId: user.userId }),
+            height: 400,
+          },
+        });
+      }
     }
-  }
-};
+  }, 1000);
 
 module.exports = async () => {
-  const adminUser = store.getAdminUser();
+  const { adminUser } = store.data;
 
   if (!adminUser || adminUser.selectedChannels.length === 0) {
     return;
   }
 
   try {
-    const users = await api.callMethod('channels.listMember', adminUser.token, { channelId: adminUser.hub, showPublicProfile: false })
-    const filteredUsers = users.filter(user => !adminUser.ignoredUsers.includes(user.userId))
-
-    for (let user of filteredUsers) {
-      const { timezone } = await api.callMethod('users.getInfo', )
-    }
+    global.MORNING_REMINDER = setHandlerTimer("15:25:00");
+    global.EVENING_REMINDER = setHandlerTimer("15:30:00");
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-
-  global.MORNING_TIMER_REMINDER = setInterval(
-    getHandlerTimer("14:45:00"),
-    1000
-  );
-
-  global.EVENING_TIMER_REMINDER = setInterval(
-    getHandlerTimer("14:50:00"),
-    1000
-  );
 };
