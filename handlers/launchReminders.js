@@ -4,8 +4,36 @@ const api = require("../api");
 const store = require("../store");
 const templates = require("../templates");
 
-const setHandlerTimer = (time) =>
-  setInterval(async () => {
+const getTimeout = (obj, userId, timezone, time) => {
+  const currentTime = moment().utcOffset(timezone).unix();
+  let futureTime = moment(time, "HH:mm:ss").utcOffset(timezone).unix();
+
+  if (currentTime > futureTime) {
+    futureTime = moment(time, "HH:mm:ss")
+      .utcOffset(timezone)
+      .add(1, "day")
+      .unix();
+  }
+
+  return setTimeout(async () => {
+    console.log({ currentTime, futureTime });
+
+    await api.sendMessage({
+      to: userId,
+      html: {
+        inline: templates.userAnswer({ userId }),
+        height: 400,
+      },
+    });
+
+    obj[userId] = getTimeout(obj, userId, timezone, time);
+  }, (futureTime - currentTime) * 1000);
+};
+
+const setHandlerTimer = async (obj, time) => {
+  try {
+    console.log("start timer");
+
     const { adminUser } = store.data;
 
     const users = await api.callMethod(
@@ -21,30 +49,21 @@ const setHandlerTimer = (time) =>
       (user) => !adminUser.ignoredUsers.includes(user.userId)
     );
 
-    console.log({ users: store.data.users, filteredUsers });
-
     for (let user of filteredUsers) {
       if (!store.data.users[user.userId]) {
         continue;
       }
 
-      const currentTime = moment()
-        .utcOffset(store.data.users[user.userId].timezone)
-        .format("HH:mm:ss");
+      console.log({ user });
 
-      console.log({ currentTime, time });
+      const { timezone } = store.data.users[user.userId];
 
-      if (currentTime === time) {
-        await api.sendMessage({
-          to: user.userId,
-          html: {
-            inline: templates.userAnswer({ userId: user.userId }),
-            height: 400,
-          },
-        });
-      }
+      obj[user.userId] = getTimeout(obj, user.userId, timezone, time);
     }
-  }, 1000);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 module.exports = async () => {
   const { adminUser } = store.data;
@@ -54,8 +73,10 @@ module.exports = async () => {
   }
 
   try {
-    global.MORNING_REMINDER = setHandlerTimer("15:25:00");
-    global.EVENING_REMINDER = setHandlerTimer("15:30:00");
+    global.MORNING_REMINDER = {};
+    setHandlerTimer(global.MORNING_REMINDER, "19:00:00");
+    global.EVENING_REMINDER = {};
+    setHandlerTimer(global.EVENING_REMINDER, "10:00:00");
   } catch (error) {
     console.log(error);
   }
